@@ -10,6 +10,26 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+//verfiy token
+function verifyJwt(req, res, next) {
+  const autheader = req.headers.authorization;
+  if (!autheader) {
+    return res.status(401).send({ message: "Unauthoried access" });
+  }
+  const userToken = autheader.split(" ")[1];
+  jwt.verify(
+    userToken,
+    process.env.ACCESS_TOKEN_SECRET,
+    function (err, decoded) {
+      if (err) {
+        return res.status(403).send({ message: "Forbidden Access" });
+      }
+      req.decoded = decoded;
+      next();
+    }
+  );
+}
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.1tyqf.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -38,7 +58,7 @@ async function run() {
     });
 
     // all todo list
-    app.get("/todos", async (req, res) => {
+    app.get("/todos", verifyJwt, async (req, res) => {
       const query = {};
       const cursor = todoCollection.find(query);
       const allTodo = await cursor.toArray(cursor);
