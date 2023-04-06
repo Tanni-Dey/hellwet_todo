@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
@@ -22,6 +23,17 @@ async function run() {
 
     //all colletction
     const todoCollection = client.db("hellwettask").collection("todos");
+
+    //Jwt
+    app.post("/login", async (req, res) => {
+      const user = req.body;
+      const accessToken = await jwt.sign(
+        user,
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "2d" }
+      );
+      res.send({ accessToken });
+    });
 
     // all todo list
     app.get("/todos", async (req, res) => {
